@@ -16,9 +16,7 @@ export default async function LoginPage() {
       <section className="login-card">
         <p className="eyebrow">Admin Access</p>
         <h1>Caption Database Admin</h1>
-        <p className="sub">
-          Sign in with Google. Only profiles with <code>is_superadmin=true</code> can enter.
-        </p>
+        <p className="sub">Sign in with Google to continue.</p>
         <LoginButton />
       </section>
     </main>
