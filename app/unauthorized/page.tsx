@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import UnauthorizedActions from './unauthorized-actions'
 
 export default function UnauthorizedPage() {
   return (
@@ -9,9 +9,7 @@ export default function UnauthorizedPage() {
         <p className="sub">
           Your account is signed in but does not have admin permissions yet.
         </p>
-        <Link className="btn" href="/login">
-          Back to Login
-        </Link>
+        <UnauthorizedActions />
       </section>
     </main>
   )
