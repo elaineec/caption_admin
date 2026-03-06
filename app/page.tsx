@@ -1,65 +1,202 @@
-import Image from "next/image";
+'use client'
 
-export default function Home() {
+import { useEffect, useState } from 'react'
+import AdminFrame from './components/AdminFrame'
+import { createSupabaseBrowserClient } from './lib/supabase/client'
+
+type MetricState = {
+  profiles: number
+  captions: number
+  images: number
+  publicCaptions: number
+}
+
+type Uploader = { id: string; count: number; label: string }
+
+export default function DashboardPage() {
+  const [metrics, setMetrics] = useState<MetricState>({
+    profiles: 0,
+    captions: 0,
+    images: 0,
+    publicCaptions: 0,
+  })
+  const [topUploaders, setTopUploaders] = useState<Uploader[]>([])
+  const [recentImages, setRecentImages] = useState<Record<string, unknown>[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const supabase = createSupabaseBrowserClient()
+
+  useEffect(() => {
+    async function loadDashboard() {
+      if (!supabase) {
+        setError('Missing Supabase environment variables.')
+        setLoading(false)
+        return
+      }
+
+      setLoading(true)
+      setError(null)
+
+      const [profilesCount, captionsCount, imagesCount, publicCount, captionsRows, profilesRows, imagesRows] =
+        await Promise.all([
+          supabase.from('profiles').select('id', { count: 'exact', head: true }),
+          supabase.from('captions').select('id', { count: 'exact', head: true }),
+          supabase.from('images').select('id', { count: 'exact', head: true }),
+          supabase.from('captions').select('id', { count: 'exact', head: true }).eq('is_public', true),
+          supabase.from('captions').select('id, profile_id').limit(5000),
+          supabase.from('profiles').select('*').limit(5000),
+          supabase.from('images').select('*').limit(8),
+        ])
+
+      const firstError =
+        profilesCount.error ||
+        captionsCount.error ||
+        imagesCount.error ||
+        publicCount.error ||
+        captionsRows.error ||
+        profilesRows.error ||
+        imagesRows.error
+
+      if (firstError) {
+        setError(firstError.message)
+        setLoading(false)
+        return
+      }
+
+      setMetrics({
+        profiles: profilesCount.count ?? 0,
+        captions: captionsCount.count ?? 0,
+        images: imagesCount.count ?? 0,
+        publicCaptions: publicCount.count ?? 0,
+      })
+
+      const byUploader = new Map<string, number>()
+      for (const row of (captionsRows.data ?? []) as Array<Record<string, unknown>>) {
+        const profileId = typeof row.profile_id === 'string' ? row.profile_id : null
+        if (!profileId) continue
+        byUploader.set(profileId, (byUploader.get(profileId) ?? 0) + 1)
+      }
+
+      const profileMap = new Map<string, Record<string, unknown>>()
+      for (const row of (profilesRows.data ?? []) as Array<Record<string, unknown>>) {
+        const id = typeof row.id === 'string' ? row.id : null
+        if (id) profileMap.set(id, row)
+      }
+
+      const top = [...byUploader.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([id, count]) => ({
+          id,
+          count,
+          label: profileLabel(profileMap.get(id), id),
+        }))
+
+      setTopUploaders(top)
+      setRecentImages((imagesRows.data ?? []) as Record<string, unknown>[])
+      setLoading(false)
+    }
+
+    loadDashboard()
+  }, [supabase])
+
+  const publicShare = metrics.captions
+    ? Math.round((metrics.publicCaptions / metrics.captions) * 100)
+    : 0
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    <AdminFrame
+      section="dashboard"
+      title="Admin Dashboard"
+      subtitle="Quick pulse of staging data and high-signal trends."
+    >
+      {error && <p className="notice error">{error}</p>}
+      {loading ? (
+        <p className="sub">Loading dashboard…</p>
+      ) : (
+        <>
+          <section className="stat-grid">
+            <article className="stat-card">
+              <p className="eyebrow">Profiles</p>
+              <strong>{metrics.profiles.toLocaleString()}</strong>
+              <small>Total user profiles</small>
+            </article>
+            <article className="stat-card">
+              <p className="eyebrow">Captions</p>
+              <strong>{metrics.captions.toLocaleString()}</strong>
+              <small>Total captions in dataset</small>
+            </article>
+            <article className="stat-card">
+              <p className="eyebrow">Images</p>
+              <strong>{metrics.images.toLocaleString()}</strong>
+              <small>Total image rows</small>
+            </article>
+            <article className="stat-card">
+              <p className="eyebrow">Public Share</p>
+              <strong>{publicShare}%</strong>
+              <small>Captions marked public</small>
+            </article>
+          </section>
+
+          <section className="panel-grid">
+            <article className="panel">
+              <h2>Top uploaders</h2>
+              {topUploaders.length ? (
+                <ul className="data-list">
+                  {topUploaders.map((uploader) => (
+                    <li key={uploader.id}>
+                      <span>{uploader.label}</span>
+                      <strong>{uploader.count}</strong>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="sub">No caption uploader data found.</p>
+              )}
+            </article>
+
+            <article className="panel">
+              <h2>Recent image rows</h2>
+              {recentImages.length ? (
+                <div className="thumb-grid">
+                  {recentImages.map((image, index) => {
+                    const id = typeof image.id === 'string' ? image.id : `image-${index}`
+                    const url = typeof image.url === 'string' ? image.url : null
+                    const label =
+                      typeof image.image_description === 'string'
+                        ? image.image_description
+                        : 'No description'
+                    return (
+                      <article key={id} className="thumb-card">
+                        {url ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={url} alt={label} />
+                        ) : (
+                          <div className="thumb-placeholder">No URL</div>
+                        )}
+                        <p>{label}</p>
+                      </article>
+                    )
+                  })}
+                </div>
+              ) : (
+                <p className="sub">No recent images available.</p>
+              )}
+            </article>
+          </section>
+        </>
+      )}
+    </AdminFrame>
+  )
+}
+
+function profileLabel(profile: Record<string, unknown> | undefined, fallbackId: string) {
+  if (!profile) return fallbackId.slice(0, 8)
+  const firstName = typeof profile.first_name === 'string' ? profile.first_name : ''
+  const lastName = typeof profile.last_name === 'string' ? profile.last_name : ''
+  const email = typeof profile.email === 'string' ? profile.email : ''
+  const name = `${firstName} ${lastName}`.trim()
+  if (name) return name
+  if (email) return email
+  return fallbackId.slice(0, 8)
 }
