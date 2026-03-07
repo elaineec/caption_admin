@@ -245,8 +245,22 @@ body {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 10px 12px;
+  min-height: 44px;
   font: inherit;
+  line-height: 1.35;
   background: rgba(255, 255, 255, 0.8);
+  outline: none;
+}
+
+.input:focus,
+.input:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(14, 123, 103, 0.14);
+}
+
+textarea.input {
+  min-height: 132px;
+  resize: vertical;
 }
 
 .table-wrap {
