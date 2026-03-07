@@ -310,7 +310,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       )}
 
       <input
-        className="input"
+        className="input search-input"
         placeholder="Search rows"
         value={query}
         onChange={(event) => setQuery(event.target.value)}

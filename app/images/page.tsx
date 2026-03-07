@@ -135,7 +135,7 @@ export default function ImagesPage() {
       </section>
 
       <input
-        className="input"
+        className="input search-input"
         placeholder="Search URL, description, or id"
         value={query}
         onChange={(e) => setQuery(e.target.value)}

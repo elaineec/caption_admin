@@ -48,7 +48,7 @@ export default function ProfilesPage() {
       subtitle="Read-only list of user profiles for moderation and access checks."
     >
       <input
-        className="input"
+        className="input search-input"
         placeholder="Search by email, id, or name"
         value={query}
         onChange={(e) => setQuery(e.target.value)}

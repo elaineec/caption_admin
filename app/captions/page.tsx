@@ -46,7 +46,7 @@ export default function CaptionsPage() {
       subtitle="Read-only table of caption rows with linked profile/image references."
     >
       <input
-        className="input"
+        className="input search-input"
         placeholder="Search caption text, profile_id, or image_id"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
