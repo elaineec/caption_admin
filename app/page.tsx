@@ -103,6 +103,14 @@ export default function DashboardPage() {
   const publicShare = metrics.captions
     ? Math.round((metrics.publicCaptions / metrics.captions) * 100)
     : 0
+  const privateShare = 100 - publicShare
+  const volumeChart = [
+    { label: 'Profiles', value: metrics.profiles },
+    { label: 'Captions', value: metrics.captions },
+    { label: 'Images', value: metrics.images },
+  ]
+  const maxVolume = Math.max(...volumeChart.map((item) => item.value), 1)
+  const maxUploader = Math.max(...topUploaders.map((item) => item.count), 1)
 
   return (
     <AdminFrame
@@ -138,15 +146,71 @@ export default function DashboardPage() {
             </article>
           </section>
 
+          <section className="chart-grid">
+            <article className="panel">
+              <h2>Dataset volume</h2>
+              <div className="bar-list">
+                {volumeChart.map((item) => {
+                  const width = Math.round((item.value / maxVolume) * 100)
+                  return (
+                    <div className="bar-row" key={item.label}>
+                      <div className="bar-label">
+                        <span>{item.label}</span>
+                        <strong>{item.value.toLocaleString()}</strong>
+                      </div>
+                      <div className="bar-track">
+                        <div className="bar-fill" style={{ width: `${width}%` }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </article>
+
+            <article className="panel">
+              <h2>Caption visibility</h2>
+              <div className="bar-list">
+                <div className="bar-row">
+                  <div className="bar-label">
+                    <span>Public</span>
+                    <strong>{publicShare}%</strong>
+                  </div>
+                  <div className="bar-track">
+                    <div className="bar-fill" style={{ width: `${publicShare}%` }} />
+                  </div>
+                </div>
+                <div className="bar-row">
+                  <div className="bar-label">
+                    <span>Private</span>
+                    <strong>{privateShare}%</strong>
+                  </div>
+                  <div className="bar-track">
+                    <div className="bar-fill muted" style={{ width: `${privateShare}%` }} />
+                  </div>
+                </div>
+              </div>
+            </article>
+          </section>
+
           <section className="panel-grid">
             <article className="panel">
               <h2>Top uploaders</h2>
               {topUploaders.length ? (
-                <ul className="data-list">
+                <ul className="data-list uploader-list">
                   {topUploaders.map((uploader) => (
                     <li key={uploader.id}>
-                      <span>{uploader.label}</span>
-                      <strong>{uploader.count}</strong>
+                      <div className="uploader-head">
+                        <span>{uploader.label}</span>
+                        <strong>{uploader.count}</strong>
+                      </div>
+                      <div className="bar-track">
+                        <div
+                          className="bar-fill"
+                          style={{
+                            width: `${Math.max(8, Math.round((uploader.count / maxUploader) * 100))}%`,
+                          }}
+                        />
+                      </div>
                     </li>
                   ))}
                 </ul>
