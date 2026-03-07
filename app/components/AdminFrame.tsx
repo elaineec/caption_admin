@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import AuthControls from './AuthControls'
 
-type Section = 'dashboard' | 'profiles' | 'images' | 'captions'
+type Section = 'dashboard' | 'profiles' | 'images' | 'captions' | 'resources'
 
 export default function AdminFrame({
   section,
@@ -34,6 +34,9 @@ export default function AdminFrame({
           </Link>
           <Link className={`nav-pill ${section === 'captions' ? 'active' : ''}`} href="/captions">
             Captions
+          </Link>
+          <Link className={`nav-pill ${section === 'resources' ? 'active' : ''}`} href="/resources">
+            Resources
           </Link>
         </nav>
         <div className="admin-auth">
