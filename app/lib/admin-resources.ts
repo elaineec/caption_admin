@@ -44,14 +44,14 @@ export const ADMIN_RESOURCES: AdminResource[] = [
     title: 'Humor Mix',
     description: 'Read and update humor mix configurations.',
     mode: 'update',
-    tableCandidates: ['humor_mix'],
+    tableCandidates: ['humor_flavor_mix'],
   },
   {
     slug: 'example-captions',
     title: 'Example Captions',
     description: 'Create, read, update, and delete example caption rows.',
     mode: 'crud',
-    tableCandidates: ['example_captions'],
+    tableCandidates: ['caption_examples'],
   },
   {
     slug: 'terms',
@@ -121,7 +121,7 @@ export const ADMIN_RESOURCES: AdminResource[] = [
     title: 'Whitelisted Email Addresses',
     description: 'Create, read, update, and delete whitelisted emails.',
     mode: 'crud',
-    tableCandidates: ['whitelisted_email_addresses', 'whitelisted_emails'],
+    tableCandidates: ['whitelist_email_addresses'],
   },
 ]
 

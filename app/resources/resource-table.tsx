@@ -22,6 +22,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
   const [editKey, setEditKey] = useState<string | number | null>(null)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadDescription, setUploadDescription] = useState('')
+  const [flavorStepsByFlavorId, setFlavorStepsByFlavorId] = useState<Record<string, GenericRow[]>>({})
   const supabase = createSupabaseBrowserClient()
 
   const filteredRows = useMemo(() => {
@@ -90,8 +91,32 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
 
     setActiveTable(loadedTable)
     setRows(loadedRows)
+
+    if (resource.slug === 'humor-flavors') {
+      const { data: stepsData, error: stepsError } = await supabase
+        .from('humor_flavor_steps')
+        .select('*')
+        .order('order_by', { ascending: true })
+
+      if (stepsError) {
+        setError(stepsError.message)
+      } else {
+        const grouped: Record<string, GenericRow[]> = {}
+        for (const step of (stepsData ?? []) as GenericRow[]) {
+          const flavorId = step.humor_flavor_id
+          if (typeof flavorId !== 'number' && typeof flavorId !== 'string') continue
+          const key = String(flavorId)
+          if (!grouped[key]) grouped[key] = []
+          grouped[key].push(step)
+        }
+        setFlavorStepsByFlavorId(grouped)
+      }
+    } else {
+      setFlavorStepsByFlavorId({})
+    }
+
     setLoading(false)
-  }, [resource.tableCandidates, resource.title, supabase])
+  }, [resource.slug, resource.tableCandidates, resource.title, supabase])
 
   useEffect(() => {
     void loadRows()
@@ -317,6 +342,56 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       />
 
       {error && <p className="notice error">{error}</p>}
+      {resource.slug === 'humor-flavors' && !loading && (
+        <section className="panel">
+          <h2>Flavor step inspector</h2>
+          <p className="sub">
+            Each humor flavor below includes its prompt-chain steps from <code>humor_flavor_steps</code>.
+          </p>
+          <div className="flavor-grid">
+            {rows.map((row, index) => {
+              const flavorId = row.id
+              const flavorKey =
+                typeof flavorId === 'number' || typeof flavorId === 'string'
+                  ? String(flavorId)
+                  : `flavor-${index}`
+              const slug = typeof row.slug === 'string' ? row.slug : 'unknown-flavor'
+              const description = typeof row.description === 'string' ? row.description : 'No description'
+              const steps = flavorStepsByFlavorId[flavorKey] ?? []
+              return (
+                <article className="panel" key={flavorKey}>
+                  <p className="eyebrow">Flavor {flavorKey}</p>
+                  <h3>{slug}</h3>
+                  <p className="sub">{description}</p>
+                  {steps.length ? (
+                    <ol className="step-list">
+                      {steps.map((step, stepIndex) => {
+                        const orderValue =
+                          typeof step.order_by === 'number' ? step.order_by : stepIndex + 1
+                        const stepType = stringifyValue(step.humor_flavor_step_type_id)
+                        const modelId = stringifyValue(step.llm_model_id)
+                        const stepDesc =
+                          typeof step.description === 'string' ? step.description : 'No description'
+                        return (
+                          <li key={`${flavorKey}-step-${stepIndex}`}>
+                            <strong>Step {orderValue}</strong>
+                            <span>{stepDesc}</span>
+                            <small>
+                              type:{stepType} model:{modelId}
+                            </small>
+                          </li>
+                        )
+                      })}
+                    </ol>
+                  ) : (
+                    <p className="sub">No steps found for this flavor.</p>
+                  )}
+                </article>
+              )
+            })}
+          </div>
+        </section>
+      )}
       {loading ? (
         <p className="sub">Loading rows…</p>
       ) : (
@@ -402,4 +477,10 @@ function renderCellValue(column: string, value: unknown) {
 
 function sanitizeFileName(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9.\-_]/g, '-')
+}
+
+function stringifyValue(value: unknown) {
+  if (value === null || value === undefined) return '—'
+  if (typeof value === 'string' || typeof value === 'number') return String(value)
+  return JSON.stringify(value)
 }
