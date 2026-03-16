@@ -7,8 +7,17 @@ export default function ResourcesPage() {
     <AdminFrame
       section="resources"
       title="Data Resources"
-      subtitle="All required datasets for read and CRUD operations."
+      subtitle="All required datasets for read and CRUD operations in one place."
     >
+      <section className="panel">
+        <div className="resource-header">
+          <div>
+            <h2>Resource Directory</h2>
+            <p className="sub">Open any dataset to inspect records or run mutations based on assignment scope.</p>
+          </div>
+          <span className="status">{ADMIN_RESOURCES.length} resources</span>
+        </div>
+      </section>
       <section className="resource-grid">
         {ADMIN_RESOURCES.map((resource) => (
           <article key={resource.slug} className="panel">

@@ -123,6 +123,14 @@ export default function DashboardPage() {
         <p className="sub">Loading dashboard…</p>
       ) : (
         <>
+          <section className="hero-panel">
+            <p className="eyebrow">Good afternoon</p>
+            <h2>Caption pipeline command center</h2>
+            <p className="sub">
+              Track throughput, moderation signals, and prompt-chain health across your staging environment.
+            </p>
+          </section>
+
           <section className="stat-grid">
             <article className="stat-card">
               <p className="eyebrow">Profiles</p>
