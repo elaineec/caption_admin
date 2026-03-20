@@ -39,12 +39,33 @@ export default function CaptionsPage() {
     return blob.includes(query.toLowerCase())
   })
 
+  const publicCount = rows.filter((row) => row.is_public === true).length
+  const withFlavor = rows.filter((row) => row.humor_flavor_id !== null && row.humor_flavor_id !== undefined).length
+
   return (
     <AdminFrame
       section="captions"
       title="Captions"
       subtitle="Read-only table of caption rows with linked profile/image references."
     >
+      <section className="insight-grid">
+        <article className="insight-card">
+          <p className="eyebrow">Captions</p>
+          <strong>{rows.length.toLocaleString()}</strong>
+          <small>Total caption rows</small>
+        </article>
+        <article className="insight-card">
+          <p className="eyebrow">Visibility</p>
+          <strong>{publicCount.toLocaleString()}</strong>
+          <small>Public captions</small>
+        </article>
+        <article className="insight-card">
+          <p className="eyebrow">Pipeline</p>
+          <strong>{withFlavor.toLocaleString()}</strong>
+          <small>Assigned to flavor</small>
+        </article>
+      </section>
+
       <input
         className="input search-input"
         placeholder="Search caption text, profile_id, or image_id"
@@ -60,9 +81,9 @@ export default function CaptionsPage() {
             <thead>
               <tr>
                 <th>Caption</th>
-                <th>Public</th>
-                <th>Profile</th>
-                <th>Image</th>
+                <th>Visibility</th>
+                <th>Flavor</th>
+                <th>References</th>
               </tr>
             </thead>
             <tbody>
@@ -71,9 +92,12 @@ export default function CaptionsPage() {
                 return (
                   <tr key={id}>
                     <td>{typeof row.content === 'string' ? row.content : '—'}</td>
-                    <td>{row.is_public === true ? 'TRUE' : 'FALSE'}</td>
-                    <td className="mono">{typeof row.profile_id === 'string' ? row.profile_id : '—'}</td>
-                    <td className="mono">{typeof row.image_id === 'string' ? row.image_id : '—'}</td>
+                    <td>{row.is_public === true ? <span className="tag">Public</span> : <span className="tag muted">Private</span>}</td>
+                    <td className="mono">{typeof row.humor_flavor_id === 'number' ? row.humor_flavor_id : '—'}</td>
+                    <td>
+                      <div className="mono">P: {typeof row.profile_id === 'string' ? row.profile_id.slice(0, 8) : '—'}</div>
+                      <div className="mono">I: {typeof row.image_id === 'string' ? row.image_id.slice(0, 8) : '—'}</div>
+                    </td>
                   </tr>
                 )
               })}

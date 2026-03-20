@@ -90,12 +90,33 @@ export default function ImagesPage() {
     return blob.includes(query.toLowerCase())
   })
 
+  const withDescription = rows.filter((row) => Boolean(row.image_description?.trim())).length
+  const missingUrl = rows.filter((row) => !row.url).length
+
   return (
     <AdminFrame
       section="images"
       title="Images"
       subtitle="Create, read, update, and delete image rows."
     >
+      <section className="insight-grid">
+        <article className="insight-card">
+          <p className="eyebrow">Images</p>
+          <strong>{rows.length.toLocaleString()}</strong>
+          <small>Total image rows</small>
+        </article>
+        <article className="insight-card">
+          <p className="eyebrow">Context</p>
+          <strong>{withDescription.toLocaleString()}</strong>
+          <small>Rows with descriptions</small>
+        </article>
+        <article className="insight-card">
+          <p className="eyebrow">Data hygiene</p>
+          <strong>{missingUrl.toLocaleString()}</strong>
+          <small>Rows missing URL</small>
+        </article>
+      </section>
+
       <section className="panel">
         <h2>{editId ? 'Update image row' : 'Create image row'}</h2>
         <form className="form-grid" onSubmit={onSubmit}>
@@ -151,6 +172,7 @@ export default function ImagesPage() {
               <tr>
                 <th>Preview</th>
                 <th>Description</th>
+                <th>Status</th>
                 <th>ID</th>
                 <th>Actions</th>
               </tr>
@@ -167,6 +189,7 @@ export default function ImagesPage() {
                     )}
                   </td>
                   <td>{row.image_description ?? '—'}</td>
+                  <td>{row.url ? <span className="tag">Ready</span> : <span className="tag muted">Missing URL</span>}</td>
                   <td className="mono">{row.id}</td>
                   <td>
                     <div className="row-actions">

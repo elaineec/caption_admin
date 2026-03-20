@@ -508,7 +508,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
             <thead>
               <tr>
                 {columns.map((column) => (
-                  <th key={column}>{column}</th>
+                  <th key={column}>{columnLabel(column)}</th>
                 ))}
                 {(canUpdate || canDelete) && <th>Actions</th>}
               </tr>
@@ -578,9 +578,15 @@ function rowKey(row: GenericRow, primaryKey: string | null, index: number) {
 
 function renderCellValue(column: string, value: unknown) {
   if (value === null || value === undefined) return '—'
-  if (typeof value === 'boolean') return value ? 'TRUE' : 'FALSE'
+  if (typeof value === 'boolean') {
+    return value ? <span className="tag">Yes</span> : <span className="tag muted">No</span>
+  }
   if (typeof value === 'number') return value.toLocaleString()
   if (typeof value === 'string') {
+    if (column.includes('datetime') || column.endsWith('_at')) {
+      const parsed = new Date(value)
+      if (!Number.isNaN(parsed.getTime())) return parsed.toLocaleString()
+    }
     if (column === 'url' && value.startsWith('http')) {
       return (
         <a href={value} target="_blank" rel="noreferrer">
@@ -601,4 +607,36 @@ function stringifyValue(value: unknown) {
   if (value === null || value === undefined) return '—'
   if (typeof value === 'string' || typeof value === 'number') return String(value)
   return JSON.stringify(value)
+}
+
+function columnLabel(column: string) {
+  const map: Record<string, string> = {
+    id: 'ID',
+    created_datetime_utc: 'Created',
+    modified_datetime_utc: 'Updated',
+    created_at: 'Created',
+    updated_at: 'Updated',
+    humor_flavor_id: 'Flavor',
+    humor_flavor_step_type_id: 'Step Type',
+    llm_model_id: 'Model',
+    llm_provider_id: 'Provider',
+    profile_id: 'Profile',
+    image_id: 'Image',
+    caption_id: 'Caption',
+    llm_user_prompt: 'User Prompt',
+    llm_system_prompt: 'System Prompt',
+    caption_count: 'Caption Count',
+    is_public: 'Public',
+    is_superadmin: 'Superadmin',
+    is_matrix_admin: 'Matrix Admin',
+    is_in_study: 'In Study',
+    order_by: 'Order',
+    apex_domain: 'Domain',
+    email_address: 'Email',
+  }
+  if (map[column]) return map[column]
+  return column
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
 }

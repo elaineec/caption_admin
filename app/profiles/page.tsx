@@ -41,12 +41,39 @@ export default function ProfilesPage() {
     return blob.includes(query.toLowerCase())
   })
 
+  const superCount = rows.filter((row) => row.is_superadmin === true).length
+  const matrixCount = rows.filter((row) => row.is_matrix_admin === true).length
+  const studyCount = rows.filter((row) => row.is_in_study === true).length
+
   return (
     <AdminFrame
       section="profiles"
       title="Profiles"
       subtitle="Read-only list of user profiles for moderation and access checks."
     >
+      <section className="insight-grid">
+        <article className="insight-card">
+          <p className="eyebrow">Profiles</p>
+          <strong>{rows.length.toLocaleString()}</strong>
+          <small>Total accounts loaded</small>
+        </article>
+        <article className="insight-card">
+          <p className="eyebrow">Privilege</p>
+          <strong>{superCount.toLocaleString()}</strong>
+          <small>Superadmins</small>
+        </article>
+        <article className="insight-card">
+          <p className="eyebrow">Privilege</p>
+          <strong>{matrixCount.toLocaleString()}</strong>
+          <small>Matrix admins</small>
+        </article>
+        <article className="insight-card">
+          <p className="eyebrow">Study</p>
+          <strong>{studyCount.toLocaleString()}</strong>
+          <small>Profiles in study</small>
+        </article>
+      </section>
+
       <input
         className="input search-input"
         placeholder="Search by email, id, or name"
@@ -61,9 +88,10 @@ export default function ProfilesPage() {
           <table className="data-table">
             <thead>
               <tr>
+                <th>User</th>
                 <th>Email</th>
-                <th>Name</th>
-                <th>Superadmin</th>
+                <th>Access</th>
+                <th>Study</th>
                 <th>ID</th>
               </tr>
             </thead>
@@ -75,11 +103,21 @@ export default function ProfilesPage() {
                   typeof row.last_name === 'string' ? row.last_name : ''
                 }`.trim()
                 const isSuper = row.is_superadmin === true
+                const isMatrix = row.is_matrix_admin === true
+                const isStudy = row.is_in_study === true
+                const userLabel = name || (email !== '—' ? email.split('@')[0] : 'Unnamed')
                 return (
                   <tr key={id}>
+                    <td>{userLabel}</td>
                     <td>{email}</td>
-                    <td>{name || '—'}</td>
-                    <td>{isSuper ? 'TRUE' : 'FALSE'}</td>
+                    <td>
+                      <div className="row-actions">
+                        {isSuper && <span className="tag">Superadmin</span>}
+                        {isMatrix && <span className="tag">Matrix Admin</span>}
+                        {!isSuper && !isMatrix && <span className="tag muted">User</span>}
+                      </div>
+                    </td>
+                    <td>{isStudy ? <span className="tag">In study</span> : <span className="tag muted">No</span>}</td>
                     <td className="mono">{id}</td>
                   </tr>
                 )

@@ -1008,3 +1008,145 @@ html[data-theme='dark'] .theme-pill {
     gap: 10px;
   }
 }
+
+.insight-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.insight-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--panel) 92%, transparent);
+}
+
+.insight-card strong {
+  display: block;
+  font-size: 28px;
+  margin-top: 8px;
+}
+
+.insight-card small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #7a8cff;
+  background: #e8edff;
+  color: #3f4eb0;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tag.muted {
+  border-color: #c5cbdf;
+  background: #f0f2f8;
+  color: #67708f;
+}
+
+html[data-theme='dark'] .insight-card {
+  background: #0f162d;
+  border-color: #263055;
+}
+
+html[data-theme='dark'] .tag {
+  border-color: #5167c8;
+  background: #1d2955;
+  color: #c6d5ff;
+}
+
+html[data-theme='dark'] .tag.muted {
+  border-color: #394268;
+  background: #141c35;
+  color: #9ba6d1;
+}
+
+/* Dark theme hard overrides: make all surfaces truly dark */
+html[data-theme='dark'] body {
+  background:
+    radial-gradient(circle at 10% 5%, rgba(106, 92, 255, 0.09), transparent 35%),
+    linear-gradient(180deg, #070b1d 0%, #0a1028 100%);
+}
+
+html[data-theme='dark'] .admin-nav {
+  border-color: #28335b;
+  background: #101528;
+}
+
+html[data-theme='dark'] .panel,
+html[data-theme='dark'] .table-wrap,
+html[data-theme='dark'] .chart-grid .panel,
+html[data-theme='dark'] .panel-grid .panel {
+  border-color: #263055;
+  background: #11172d;
+}
+
+html[data-theme='dark'] .data-list li,
+html[data-theme='dark'] .thumb-card {
+  background: #0e1427;
+  border-color: #253055;
+}
+
+html[data-theme='dark'] .data-table th {
+  background: #121a31;
+}
+
+html[data-theme='dark'] .bar-track {
+  border-color: #2f3b65;
+  background: #0d1326;
+}
+
+html[data-theme='dark'] .input {
+  border-color: #304071;
+  background: #0c1327;
+  color: #edf1ff;
+}
+
+html[data-theme='dark'] .input::placeholder {
+  color: #8f9fd3;
+}
+
+html[data-theme='dark'] .hero-panel {
+  background:
+    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.08), transparent 32%),
+    linear-gradient(135deg, #282b8f, #4a218f 45%, #7a2d73 100%);
+}
+
+html[data-theme='dark'] .stat-card:nth-child(1) {
+  background: linear-gradient(135deg, #2f4cc2, #4f3bc2);
+}
+html[data-theme='dark'] .stat-card:nth-child(2) {
+  background: linear-gradient(135deg, #138876, #1c9b8a);
+}
+html[data-theme='dark'] .stat-card:nth-child(3) {
+  background: linear-gradient(135deg, #b94f24, #b03b50);
+}
+html[data-theme='dark'] .stat-card:nth-child(4) {
+  background: linear-gradient(135deg, #5d3ac7, #843ac7);
+}
+
+html[data-theme='dark'] .btn.ghost {
+  border-color: #3a4d8a;
+  background: #161f3d;
+  color: #b4c4ff;
+}
+
+html[data-theme='dark'] .code-block {
+  background: #0b1224;
+  border-color: #2b365f;
+}
+
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme='light']) body {
+    background:
+      radial-gradient(circle at 10% 5%, rgba(106, 92, 255, 0.09), transparent 35%),
+      linear-gradient(180deg, #070b1d 0%, #0a1028 100%);
+  }
+}
