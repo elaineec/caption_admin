@@ -1,6 +1,7 @@
 'use client'
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { createSupabaseBrowserClient } from '../lib/supabase/client'
 import type { AdminResource } from '../lib/admin-resources'
 
@@ -24,6 +25,13 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
   const [uploadDescription, setUploadDescription] = useState('')
   const [flavorStepsByFlavorId, setFlavorStepsByFlavorId] = useState<Record<string, GenericRow[]>>({})
   const supabase = createSupabaseBrowserClient()
+  const searchParams = useSearchParams()
+  const [captionFlavorFilter, setCaptionFlavorFilter] = useState('')
+
+  useEffect(() => {
+    if (resource.slug !== 'captions') return
+    setCaptionFlavorFilter(searchParams.get('flavor') ?? '')
+  }, [resource.slug, searchParams])
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -72,7 +80,20 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     let lastError: string | null = null
 
     for (const tableName of resource.tableCandidates) {
-      const { data, error: loadError } = await supabase.from(tableName).select('*').limit(500)
+      let request = supabase.from(tableName).select('*').limit(500)
+
+      if (resource.slug === 'humor-flavor-steps') {
+        request = request.order('humor_flavor_id', { ascending: true }).order('order_by', { ascending: true })
+      }
+
+      if (resource.slug === 'captions' && captionFlavorFilter) {
+        const flavorId = Number(captionFlavorFilter)
+        if (!Number.isNaN(flavorId)) {
+          request = request.eq('humor_flavor_id', flavorId)
+        }
+      }
+
+      const { data, error: loadError } = await request
       if (!loadError) {
         loadedTable = tableName
         loadedRows = (data ?? []) as GenericRow[]
@@ -116,7 +137,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     }
 
     setLoading(false)
-  }, [resource.slug, resource.tableCandidates, resource.title, supabase])
+  }, [captionFlavorFilter, resource.slug, resource.tableCandidates, resource.title, supabase])
 
   useEffect(() => {
     void loadRows()
@@ -200,6 +221,64 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       setError(deleteError.message)
       return
     }
+    await loadRows()
+  }
+
+  async function moveFlavorStep(row: GenericRow, direction: 'up' | 'down') {
+    if (!supabase || !activeTable || resource.slug !== 'humor-flavor-steps' || !primaryKey) return
+
+    const rowId = row[primaryKey]
+    const flavorId = row.humor_flavor_id
+    const currentOrder = row.order_by
+
+    if (
+      (typeof rowId !== 'string' && typeof rowId !== 'number') ||
+      (typeof flavorId !== 'string' && typeof flavorId !== 'number') ||
+      typeof currentOrder !== 'number'
+    ) {
+      setError('Step row is missing required fields for reorder.')
+      return
+    }
+
+    const siblings = rows
+      .filter((item) => String(item.humor_flavor_id) === String(flavorId))
+      .slice()
+      .sort((a, b) => Number(a.order_by ?? 0) - Number(b.order_by ?? 0))
+
+    const currentIndex = siblings.findIndex((item) => String(item[primaryKey]) === String(rowId))
+    if (currentIndex === -1) return
+
+    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+    if (targetIndex < 0 || targetIndex >= siblings.length) return
+
+    const targetRow = siblings[targetIndex]
+    const targetId = targetRow[primaryKey]
+    const targetOrder = targetRow.order_by
+    if ((typeof targetId !== 'string' && typeof targetId !== 'number') || typeof targetOrder !== 'number') {
+      setError('Neighbor step is missing reorder fields.')
+      return
+    }
+
+    setError(null)
+
+    const { error: firstError } = await supabase
+      .from(activeTable)
+      .update({ order_by: targetOrder })
+      .eq(primaryKey, rowId)
+    if (firstError) {
+      setError(firstError.message)
+      return
+    }
+
+    const { error: secondError } = await supabase
+      .from(activeTable)
+      .update({ order_by: currentOrder })
+      .eq(primaryKey, targetId)
+    if (secondError) {
+      setError(secondError.message)
+      return
+    }
+
     await loadRows()
   }
 
@@ -341,6 +420,32 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
         onChange={(event) => setQuery(event.target.value)}
       />
 
+      {resource.slug === 'captions' && (
+        <section className="panel">
+          <h2>Produced captions by flavor</h2>
+          <div className="row-actions">
+            <input
+              className="input search-input"
+              placeholder="Humor flavor id"
+              value={captionFlavorFilter}
+              onChange={(event) => setCaptionFlavorFilter(event.target.value)}
+            />
+            <button className="btn" onClick={() => void loadRows()}>
+              Apply
+            </button>
+            <button
+              className="btn ghost"
+              onClick={() => {
+                setCaptionFlavorFilter('')
+                void loadRows()
+              }}
+            >
+              Clear
+            </button>
+          </div>
+        </section>
+      )}
+
       {error && <p className="notice error">{error}</p>}
       {resource.slug === 'humor-flavors' && !loading && (
         <section className="panel">
@@ -363,6 +468,9 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
                   <p className="eyebrow">Flavor {flavorKey}</p>
                   <h3>{slug}</h3>
                   <p className="sub">{description}</p>
+                  <a className="btn ghost" href={`/resources/captions?flavor=${flavorKey}`}>
+                    View produced captions
+                  </a>
                   {steps.length ? (
                     <ol className="step-list">
                       {steps.map((step, stepIndex) => {
@@ -422,6 +530,16 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
                             <button className="btn ghost" onClick={() => beginEdit(row)}>
                               Edit
                             </button>
+                          )}
+                          {resource.slug === 'humor-flavor-steps' && (
+                            <>
+                              <button className="btn ghost" onClick={() => void moveFlavorStep(row, 'up')}>
+                                Move up
+                              </button>
+                              <button className="btn ghost" onClick={() => void moveFlavorStep(row, 'down')}>
+                                Move down
+                              </button>
+                            </>
                           )}
                           {canDelete && (
                             <button className="btn danger" onClick={() => void handleDelete(row)}>

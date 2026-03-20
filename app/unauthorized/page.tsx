@@ -5,9 +5,9 @@ export default function UnauthorizedPage() {
     <main className="login-page">
       <section className="login-card">
         <p className="eyebrow">Unauthorized</p>
-        <h1>Superadmin required</h1>
+        <h1>Admin access required</h1>
         <p className="sub">
-          Your account is signed in but does not have admin permissions yet.
+          Your account is signed in but does not have superadmin or matrix admin permissions yet.
         </p>
         <UnauthorizedActions />
       </section>

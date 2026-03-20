@@ -32,11 +32,12 @@ export async function middleware(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('is_superadmin')
+    .select('is_superadmin,is_matrix_admin')
     .eq('id', user.id)
     .maybeSingle()
 
-  if (!profile?.is_superadmin) {
+  const canAccess = profile?.is_superadmin === true || profile?.is_matrix_admin === true
+  if (!canAccess) {
     return NextResponse.redirect(new URL('/unauthorized', request.url))
   }
 

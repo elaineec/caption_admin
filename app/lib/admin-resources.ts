@@ -29,14 +29,14 @@ export const ADMIN_RESOURCES: AdminResource[] = [
     slug: 'humor-flavors',
     title: 'Humor Flavors',
     description: 'Read flavor taxonomies used by prompt and ranking systems.',
-    mode: 'read',
+    mode: 'crud',
     tableCandidates: ['humor_flavors'],
   },
   {
     slug: 'humor-flavor-steps',
     title: 'Humor Flavor Steps',
     description: 'Read humor flavor progression steps.',
-    mode: 'read',
+    mode: 'crud',
     tableCandidates: ['humor_flavor_steps'],
   },
   {
@@ -45,13 +45,6 @@ export const ADMIN_RESOURCES: AdminResource[] = [
     description: 'Read and update humor mix configurations.',
     mode: 'update',
     tableCandidates: ['humor_flavor_mix'],
-  },
-  {
-    slug: 'example-captions',
-    title: 'Example Captions',
-    description: 'Create, read, update, and delete example caption rows.',
-    mode: 'crud',
-    tableCandidates: ['caption_examples'],
   },
   {
     slug: 'terms',

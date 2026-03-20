@@ -1,8 +1,9 @@
 import Link from 'next/link'
 import AuthControls from './AuthControls'
 import { ADMIN_RESOURCES } from '../lib/admin-resources'
+import ThemeToggle from './ThemeToggle'
 
-type Section = 'dashboard' | 'profiles' | 'images' | 'captions' | 'resources'
+type Section = 'dashboard' | 'profiles' | 'images' | 'captions' | 'resources' | 'prompt-lab'
 
 const CONTENT_SLUGS = ['images', 'captions', 'caption-requests', 'caption-examples', 'terms'] as const
 const HUMOR_SLUGS = ['humor-flavors', 'humor-flavor-steps', 'humor-mix'] as const
@@ -70,6 +71,9 @@ export default function AdminFrame({
               {resource.title}
             </Link>
           ))}
+          <Link className={`sidebar-link ${section === 'prompt-lab' ? 'active' : ''}`} href="/prompt-lab">
+            Prompt Lab
+          </Link>
 
           <p className="sidebar-label">Access</p>
           {bySlugs(ACCESS_SLUGS).map((resource) => (
@@ -91,6 +95,7 @@ export default function AdminFrame({
             <h1>{title}</h1>
             <p className="sub">{subtitle}</p>
           </div>
+          <ThemeToggle />
         </header>
 
         <section className="admin-content">{children}</section>
