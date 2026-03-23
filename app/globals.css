@@ -601,14 +601,14 @@ textarea.search-input {
 
 /* Inspired redesign: sidebar shell + polished resource surfaces */
 :root {
-  --sidebar-bg: #0b1230;
-  --sidebar-2: #121a44;
-  --sidebar-border: #24316f;
-  --sidebar-text: #d8e3ff;
-  --purple: #6a5cff;
-  --teal: #1fc1a7;
-  --rose: #ff5db1;
-  --sky: #4f7cff;
+  --sidebar-bg: #09152d;
+  --sidebar-2: #10224a;
+  --sidebar-border: #284c92;
+  --sidebar-text: #e8f0ff;
+  --gold: #ffd45c;
+  --gold-soft: #fff0ae;
+  --sky: #4f8cff;
+  --sky-deep: #1e56d9;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -622,15 +622,17 @@ textarea.search-input {
 
 body {
   background:
-    radial-gradient(circle at 10% 5%, rgba(106, 92, 255, 0.1), transparent 35%),
-    linear-gradient(180deg, #f5f7fb 0%, #eff3fb 100%);
+    radial-gradient(circle at 12% 8%, rgba(79, 140, 255, 0.18), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(255, 212, 92, 0.22), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #eef4ff 100%);
 }
 
 @media (prefers-color-scheme: dark) {
   body {
     background:
-      radial-gradient(circle at 10% 5%, rgba(106, 92, 255, 0.14), transparent 35%),
-      linear-gradient(180deg, #0a1027 0%, #0c122e 100%);
+      radial-gradient(circle at 12% 8%, rgba(79, 140, 255, 0.2), transparent 34%),
+      radial-gradient(circle at 88% 10%, rgba(255, 212, 92, 0.12), transparent 24%),
+      linear-gradient(180deg, #081126 0%, #0d1833 100%);
   }
 }
 
@@ -662,7 +664,7 @@ body {
 }
 
 .sidebar-brand .eyebrow {
-  color: #c0ccff;
+  color: var(--gold);
 }
 
 .sidebar-brand h2 {
@@ -681,7 +683,7 @@ body {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: #8fa2e9;
+  color: #99b9ff;
 }
 
 .sidebar-link {
@@ -695,7 +697,7 @@ body {
 }
 
 .sidebar-link.secondary {
-  color: #bdcaf8;
+  color: #cddcff;
   font-size: 13px;
 }
 
@@ -705,9 +707,9 @@ body {
 }
 
 .sidebar-link.active {
-  border-color: #4b5eb2;
-  background: linear-gradient(135deg, #2f3f86, #364bb1);
-  color: white;
+  border-color: #7daeff;
+  background: linear-gradient(135deg, #1f56d7, #3e87ff 70%, #78aaff 100%);
+  color: #fdfefc;
 }
 
 .admin-page {
@@ -743,14 +745,14 @@ body {
 }
 
 .hero-panel {
-  border: 1px solid #c9d3ff;
+  border: 1px solid #bfd4ff;
   border-radius: 20px;
   padding: 22px;
   color: white;
   background:
-    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.14), transparent 32%),
-    linear-gradient(135deg, #4f4bff, #7d36ff 45%, #ff4b97 100%);
-  box-shadow: 0 18px 34px rgba(83, 72, 195, 0.23);
+    radial-gradient(circle at 82% 18%, rgba(255, 230, 136, 0.3), transparent 26%),
+    linear-gradient(135deg, #1f5fe4, #458dff 55%, #f2c94c 100%);
+  box-shadow: 0 18px 34px rgba(39, 84, 196, 0.24);
 }
 
 .hero-panel .eyebrow,
@@ -781,16 +783,22 @@ body {
 }
 
 .stat-card:nth-child(1) {
-  background: linear-gradient(135deg, #4f7cff, #6959ff);
+  background: linear-gradient(135deg, #245de0, #5f9cff);
 }
 .stat-card:nth-child(2) {
-  background: linear-gradient(135deg, #14b89b, #3cc8b7);
+  background: linear-gradient(135deg, #1c70e8, #74adff);
 }
 .stat-card:nth-child(3) {
-  background: linear-gradient(135deg, #ff7432, #ff5b76);
+  background: linear-gradient(135deg, #c89012, #ffd45c);
+  color: #17233b;
 }
 .stat-card:nth-child(4) {
-  background: linear-gradient(135deg, #7a4dff, #b04dff);
+  background: linear-gradient(135deg, #3466e8, #89a8ff);
+}
+
+.stat-card:nth-child(3) .eyebrow,
+.stat-card:nth-child(3) small {
+  color: rgba(23, 35, 59, 0.72);
 }
 
 .chart-grid .panel,
@@ -818,11 +826,11 @@ body {
 }
 
 .bar-fill {
-  background: linear-gradient(90deg, #5b62ff, #9e5eff);
+  background: linear-gradient(90deg, #3169ef, #6aa6ff);
 }
 
 .bar-fill.muted {
-  background: linear-gradient(90deg, #16b29a, #27c0a8);
+  background: linear-gradient(90deg, #d9a521, #ffd86a);
 }
 
 .data-table th {
@@ -839,20 +847,20 @@ body {
 
 .input:focus,
 .input:focus-visible {
-  border-color: #5c63ff;
-  box-shadow: 0 0 0 3px rgba(92, 99, 255, 0.14);
+  border-color: #3c79f0;
+  box-shadow: 0 0 0 3px rgba(60, 121, 240, 0.16);
 }
 
 .btn {
   border-color: transparent;
-  background: linear-gradient(135deg, #584fff, #4f81ff);
+  background: linear-gradient(135deg, #2158d9, #4d92ff);
   color: white;
 }
 
 .btn.ghost {
-  border-color: #cbd6f8;
-  background: #edf2ff;
-  color: #4f58c8;
+  border-color: #c9d9ff;
+  background: #eef4ff;
+  color: #245ed6;
 }
 
 .btn.danger {
@@ -873,7 +881,16 @@ body {
 
 .admin-sidebar .account-label,
 .admin-sidebar .account-caret {
-  color: #aabcff;
+  color: #a7c3ff;
+}
+
+.account-status {
+  font-size: 12px;
+  color: #4a6cca;
+}
+
+.admin-sidebar .account-status {
+  color: var(--gold-soft);
 }
 
 .admin-sidebar .account-menu {
@@ -1165,21 +1182,27 @@ html[data-theme='dark'] .input::placeholder {
 
 html[data-theme='dark'] .hero-panel {
   background:
-    radial-gradient(circle at 90% 10%, rgba(255, 255, 255, 0.08), transparent 32%),
-    linear-gradient(135deg, #282b8f, #4a218f 45%, #7a2d73 100%);
+    radial-gradient(circle at 82% 18%, rgba(255, 230, 136, 0.18), transparent 26%),
+    linear-gradient(135deg, #173b97, #2867d1 55%, #b78a1a 100%);
 }
 
 html[data-theme='dark'] .stat-card:nth-child(1) {
-  background: linear-gradient(135deg, #2f4cc2, #4f3bc2);
+  background: linear-gradient(135deg, #1d4fbe, #417eeb);
 }
 html[data-theme='dark'] .stat-card:nth-child(2) {
-  background: linear-gradient(135deg, #138876, #1c9b8a);
+  background: linear-gradient(135deg, #225fd1, #5f9eff);
 }
 html[data-theme='dark'] .stat-card:nth-child(3) {
-  background: linear-gradient(135deg, #b94f24, #b03b50);
+  background: linear-gradient(135deg, #9b7617, #d7ae38);
+  color: #081126;
 }
 html[data-theme='dark'] .stat-card:nth-child(4) {
-  background: linear-gradient(135deg, #5d3ac7, #843ac7);
+  background: linear-gradient(135deg, #2c5cc8, #7298f7);
+}
+
+html[data-theme='dark'] .stat-card:nth-child(3) .eyebrow,
+html[data-theme='dark'] .stat-card:nth-child(3) small {
+  color: rgba(8, 17, 38, 0.7);
 }
 
 html[data-theme='dark'] .btn.ghost {
@@ -1214,43 +1237,44 @@ html[data-theme='dark'] .code-block {
 }
 
 .btn.ghost.active-mode {
-  background: #5b62ff;
-  border-color: #5b62ff;
+  background: #2c68eb;
+  border-color: #2c68eb;
   color: white;
 }
 
 html[data-theme='dark'] .btn.ghost.active-mode {
-  background: #4450d4;
-  border-color: #4450d4;
+  background: #2d63ce;
+  border-color: #2d63ce;
   color: white;
 }
 
 /* Dashboard color refresh */
 .hero-panel {
   background:
-    radial-gradient(circle at 88% 8%, rgba(255, 255, 255, 0.16), transparent 36%),
-    linear-gradient(135deg, #2a4ef7, #5a45e0 46%, #b54ebf 100%);
+    radial-gradient(circle at 86% 10%, rgba(255, 235, 154, 0.34), transparent 34%),
+    linear-gradient(135deg, #1f60e6, #4e93ff 56%, #f3ca4d 100%);
 }
 
 .stat-card:nth-child(1) {
-  background: linear-gradient(135deg, #4564ec, #5f6de8);
+  background: linear-gradient(135deg, #2258dc, #5d97ff);
 }
 .stat-card:nth-child(2) {
-  background: linear-gradient(135deg, #169ea0, #28b8b1);
+  background: linear-gradient(135deg, #2a6be8, #76b0ff);
 }
 .stat-card:nth-child(3) {
-  background: linear-gradient(135deg, #dd6b49, #eb8160);
+  background: linear-gradient(135deg, #d2a11d, #ffdc74);
+  color: #17233b;
 }
 .stat-card:nth-child(4) {
-  background: linear-gradient(135deg, #6d59dd, #8667f0);
+  background: linear-gradient(135deg, #366ceb, #8cadff);
 }
 
 .bar-fill {
-  background: linear-gradient(90deg, #5d74ff, #8b69ea);
+  background: linear-gradient(90deg, #2f67eb, #74adff);
 }
 
 .bar-fill.muted {
-  background: linear-gradient(90deg, #23a7a7, #31b9b0);
+  background: linear-gradient(90deg, #d7a21d, #ffd86c);
 }
 
 @media (max-width: 840px) {

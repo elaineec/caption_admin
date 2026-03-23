@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import type { User } from '@supabase/supabase-js'
 import { createSupabaseBrowserClient } from '../lib/supabase/client'
 
 type UserInfo = {
   email?: string | null
   name?: string | null
+  statusLabel?: string | null
 }
 
 export default function AuthControls() {
@@ -16,20 +18,39 @@ export default function AuthControls() {
 
   useEffect(() => {
     if (!supabase) return
+
+    async function resolveUserInfo(authUser: User | null) {
+      if (!authUser) {
+        setUser(null)
+        return
+      }
+
+      let statusLabel = 'Admin'
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('is_superadmin,is_matrix_admin')
+        .eq('id', authUser.id)
+        .maybeSingle()
+
+      if (profile?.is_superadmin === true) {
+        statusLabel = 'Superadmin'
+      } else if (profile?.is_matrix_admin === true) {
+        statusLabel = 'Matrix admin'
+      }
+
+      setUser({
+        email: authUser.email,
+        name: authUser.user_metadata?.full_name ?? null,
+        statusLabel,
+      })
+    }
+
     supabase.auth.getUser().then(({ data }) => {
-      setUser(
-        data.user
-          ? { email: data.user.email, name: data.user.user_metadata?.full_name ?? null }
-          : null
-      )
+      void resolveUserInfo(data.user)
     })
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(
-        session?.user
-          ? { email: session.user.email, name: session.user.user_metadata?.full_name ?? null }
-          : null
-      )
+      void resolveUserInfo(session?.user ?? null)
     })
 
     return () => {
@@ -77,6 +98,7 @@ export default function AuthControls() {
         >
           <div className="account-label">Account</div>
           <div className="account-name">{user.name ?? user.email ?? 'Signed in'}</div>
+          <div className="account-status">{user.statusLabel ?? 'Admin'}</div>
           <span className="account-caret">▾</span>
         </button>
         {open && (
