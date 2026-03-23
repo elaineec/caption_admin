@@ -95,16 +95,27 @@ export default function AuthControls() {
           className="account-button"
           onClick={() => setOpen((prev) => !prev)}
           aria-expanded={open}
+          aria-haspopup="menu"
+          aria-controls="account-menu"
           disabled={loading}
         >
+          <span className="account-avatar" aria-hidden="true">
+            {(user.name ?? user.email ?? 'A').charAt(0).toUpperCase()}
+          </span>
+          <div className="account-meta">
           <div className="account-label">Account</div>
           <div className="account-name">{user.name ?? user.email ?? 'Signed in'}</div>
           <div className="account-status">{user.statusLabel ?? 'Admin'}</div>
+          </div>
           <span className="account-caret">▾</span>
         </button>
         {open && (
-          <div className="account-menu">
-            <button className="btn" onClick={signOut} disabled={loading}>
+          <div className="account-menu" id="account-menu" role="menu">
+            <div className="account-menu-meta">
+              <strong>{user.name ?? 'Signed in'}</strong>
+              <span>{user.email ?? 'No email available'}</span>
+            </div>
+            <button className="btn account-signout" onClick={signOut} disabled={loading} role="menuitem">
               Sign out
             </button>
           </div>

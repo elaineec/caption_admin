@@ -98,6 +98,37 @@ export default function AdminFrame({
           <ThemeToggle />
         </header>
 
+        <section className="start-here-strip" aria-label="Start here onboarding">
+          <div className="start-here-copy">
+            <p className="eyebrow">Start here</p>
+            <h2>Three steps to get useful work done quickly</h2>
+            <p className="sub">Pick a section, make one focused change, then confirm the success state before moving on.</p>
+          </div>
+          <div className="start-here-steps">
+            <article className="start-step">
+              <span className="start-step-index">1</span>
+              <div>
+                <strong>Choose a lane</strong>
+                <p>Use the sidebar to jump to the exact dataset or admin tool you need.</p>
+              </div>
+            </article>
+            <article className="start-step">
+              <span className="start-step-index">2</span>
+              <div>
+                <strong>Filter before editing</strong>
+                <p>Search first so edits stay targeted and safer to review.</p>
+              </div>
+            </article>
+            <article className="start-step">
+              <span className="start-step-index">3</span>
+              <div>
+                <strong>Verify the confirmation</strong>
+                <p>Look for the success banner after a save, upload, delete, or reorder action.</p>
+              </div>
+            </article>
+          </div>
+        </section>
+
         <section className="admin-content">{children}</section>
       </section>
     </main>

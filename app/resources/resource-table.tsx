@@ -29,6 +29,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadDescription, setUploadDescription] = useState('')
   const [flavorStepsByFlavorId, setFlavorStepsByFlavorId] = useState<Record<string, GenericRow[]>>({})
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const supabase = createSupabaseBrowserClient()
   const searchParams = useSearchParams()
   const [captionFlavorFilter, setCaptionFlavorFilter] = useState('')
@@ -194,6 +195,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     if (!supabase || !activeTable) return
     setSaving(true)
     setError(null)
+    setSuccessMessage(null)
 
     try {
       const actorId = await getActorProfileId(supabase)
@@ -211,6 +213,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
           })
           .eq(primaryKey, editKey)
         if (updateError) throw updateError
+        setSuccessMessage(`Updated row ${String(editKey)} in ${resource.title}.`)
       } else if (canCreate) {
         const { error: insertError } = await supabase.from(activeTable).insert({
           ...payload,
@@ -218,6 +221,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
           modified_by_user_id: actorId,
         })
         if (insertError) throw insertError
+        setSuccessMessage(`Created a new row in ${resource.title}.`)
       } else {
         throw new Error('This resource is not create-enabled.')
       }
@@ -263,11 +267,13 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       return
     }
     setError(null)
+    setSuccessMessage(null)
     const { error: deleteError } = await supabase.from(activeTable).delete().eq(primaryKey, keyValue)
     if (deleteError) {
       setError(deleteError.message)
       return
     }
+    setSuccessMessage(`Deleted row ${String(keyValue)} from ${resource.title}.`)
     await loadRows()
   }
 
@@ -307,6 +313,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     }
 
     setError(null)
+    setSuccessMessage(null)
     const actorId = await getActorProfileId(supabase)
     if (!actorId) {
       setError('Unable to resolve signed-in profile id for reorder operation.')
@@ -337,6 +344,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       return
     }
 
+    setSuccessMessage(`Moved step ${String(rowId)} ${direction} in ${resource.title}.`)
     await loadRows()
   }
 
@@ -344,6 +352,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     if (!supabase || !activeTable || !uploadFile || !canUpload) return
     setUploading(true)
     setError(null)
+    setSuccessMessage(null)
 
     const bucketName = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET || 'images'
     const fileName = sanitizeFileName(uploadFile.name)
@@ -387,13 +396,14 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
 
     setUploadFile(null)
     setUploadDescription('')
+    setSuccessMessage(`Uploaded ${uploadFile.name} and inserted a new ${resource.title} row.`)
     await loadRows()
     setUploading(false)
   }
 
   return (
-    <div className="admin-content">
-      <section className="panel">
+    <div className="resource-layout">
+      <section className="panel resource-summary-panel">
         <div className="resource-header">
           <div>
             <h2>{resource.title}</h2>
@@ -410,7 +420,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       </section>
 
       {(canCreate || canUpdate || canDelete) && (
-        <section className="panel helper-panel">
+        <section className="panel helper-panel resource-guide-panel">
           <h2>Operator guide</h2>
           <p className="sub">
             Use search to isolate rows, then edit/delete from row actions. Guided mode is recommended for normal use.
@@ -420,13 +430,17 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       )}
 
       {canUpload && (
-        <section className="panel">
-          <h2>Upload image file</h2>
-          <p className="sub">
-            Uploads to Supabase Storage bucket <code>{process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET || 'images'}</code>
-            , then inserts an image row.
-          </p>
-          <div className="form-grid">
+        <section className="panel resource-form-panel">
+          <div className="resource-section-head">
+            <div>
+              <h2>Upload image file</h2>
+              <p className="sub">
+                Uploads to Supabase Storage bucket <code>{process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET || 'images'}</code>
+                , then inserts an image row.
+              </p>
+            </div>
+          </div>
+          <div className="form-grid resource-form-grid">
             <input
               className="input"
               type="file"
@@ -452,35 +466,39 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       )}
 
       {(canCreate || canUpdate) && (
-        <section className="panel">
-          <h2>
-            {canUpdate && editKey !== null
-              ? `Update row (${primaryKey}: ${String(editKey)})`
-              : canCreate
-                ? 'Create row'
-                : 'Update row'}
-          </h2>
-          <p className="sub">Guided form mode is default. Switch to JSON only when you need advanced control.</p>
-          <div className="row-actions">
-            <button
-              type="button"
-              className={`btn ghost ${editorMode === 'guided' ? 'active-mode' : ''}`}
-              onClick={() => setEditorMode('guided')}
-            >
-              Guided form
-            </button>
-            <button
-              type="button"
-              className={`btn ghost ${editorMode === 'json' ? 'active-mode' : ''}`}
-              onClick={() => setEditorMode('json')}
-            >
-              JSON mode
-            </button>
+        <section className="panel resource-form-panel">
+          <div className="resource-section-head">
+            <div>
+              <h2>
+                {canUpdate && editKey !== null
+                  ? `Update row (${primaryKey}: ${String(editKey)})`
+                  : canCreate
+                    ? 'Create row'
+                    : 'Update row'}
+              </h2>
+              <p className="sub">Guided form mode is default. Switch to JSON only when you need advanced control.</p>
+            </div>
+            <div className="row-actions">
+              <button
+                type="button"
+                className={`btn ghost ${editorMode === 'guided' ? 'active-mode' : ''}`}
+                onClick={() => setEditorMode('guided')}
+              >
+                Guided form
+              </button>
+              <button
+                type="button"
+                className={`btn ghost ${editorMode === 'json' ? 'active-mode' : ''}`}
+                onClick={() => setEditorMode('json')}
+              >
+                JSON mode
+              </button>
+            </div>
           </div>
-          <form className="form-grid" onSubmit={handleCreateOrUpdate}>
+          <form className="form-grid resource-form-grid" onSubmit={handleCreateOrUpdate}>
             {editorMode === 'guided' ? (
               <>
-                <div className="row-actions">
+                <div className="row-actions resource-inline-controls">
                   <select
                     className="input"
                     value={fieldDraft}
@@ -628,17 +646,33 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
         </section>
       )}
 
-      <input
-        className="input search-input"
-        placeholder="Search rows"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-      />
+      <section className="panel resource-search-panel">
+        <div className="resource-section-head">
+          <div>
+            <h2>Browse rows</h2>
+            <p className="sub">Search the current dataset before opening row actions.</p>
+          </div>
+          <p className="result-meta">
+            Showing {shownCount.toLocaleString()} of {totalCount.toLocaleString()} rows
+          </p>
+        </div>
+        <input
+          className="input search-input"
+          placeholder="Search rows"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+        />
+      </section>
 
       {resource.slug === 'captions' && (
-        <section className="panel">
-          <h2>Produced captions by flavor</h2>
-          <div className="row-actions">
+        <section className="panel resource-search-panel">
+          <div className="resource-section-head">
+            <div>
+              <h2>Produced captions by flavor</h2>
+              <p className="sub">Apply a humor flavor filter to narrow the caption dataset.</p>
+            </div>
+          </div>
+          <div className="row-actions resource-inline-controls">
             <input
               className="input search-input"
               placeholder="Humor flavor id"
@@ -661,6 +695,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
         </section>
       )}
 
+      {successMessage && <p className="notice success">{successMessage}</p>}
       {error && <p className="notice error">{error}</p>}
       {resource.slug === 'humor-flavors' && !loading && (
         <section className="panel">
