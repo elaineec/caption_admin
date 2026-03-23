@@ -80,6 +80,9 @@ export default function ProfilesPage() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
+      <p className="result-meta">
+        Showing {filtered.length.toLocaleString()} of {rows.length.toLocaleString()} profiles
+      </p>
       {error && <p className="notice error">{error}</p>}
       {loading ? (
         <p className="sub">Loading profiles…</p>
@@ -124,6 +127,12 @@ export default function ProfilesPage() {
               })}
             </tbody>
           </table>
+          {filtered.length === 0 && (
+            <div className="empty-state">
+              <h3>No profiles found</h3>
+              <p>Try searching by a different email, name, or ID fragment.</p>
+            </div>
+          )}
         </div>
       )}
     </AdminFrame>

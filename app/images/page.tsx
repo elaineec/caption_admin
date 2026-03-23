@@ -181,6 +181,9 @@ export default function ImagesPage() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
+      <p className="result-meta">
+        Showing {filtered.length.toLocaleString()} of {rows.length.toLocaleString()} image rows
+      </p>
       {error && <p className="notice error">{error}</p>}
 
       {loading ? (
@@ -225,6 +228,12 @@ export default function ImagesPage() {
               ))}
             </tbody>
           </table>
+          {filtered.length === 0 && (
+            <div className="empty-state">
+              <h3>No image rows found</h3>
+              <p>Try a broader search or create a new image row above.</p>
+            </div>
+          )}
         </div>
       )}
     </AdminFrame>

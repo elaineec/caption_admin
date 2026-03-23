@@ -72,6 +72,9 @@ export default function CaptionsPage() {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
       />
+      <p className="result-meta">
+        Showing {filtered.length.toLocaleString()} of {rows.length.toLocaleString()} captions
+      </p>
       {error && <p className="notice error">{error}</p>}
       {loading ? (
         <p className="sub">Loading captions…</p>
@@ -103,6 +106,12 @@ export default function CaptionsPage() {
               })}
             </tbody>
           </table>
+          {filtered.length === 0 && (
+            <div className="empty-state">
+              <h3>No captions found</h3>
+              <p>Try searching by caption text, profile reference, or image reference.</p>
+            </div>
+          )}
         </div>
       )}
     </AdminFrame>
