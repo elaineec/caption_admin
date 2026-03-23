@@ -18,6 +18,7 @@ export default function AuthControls() {
 
   useEffect(() => {
     if (!supabase) return
+    const client = supabase
 
     async function resolveUserInfo(authUser: User | null) {
       if (!authUser) {
@@ -26,7 +27,7 @@ export default function AuthControls() {
       }
 
       let statusLabel = 'Admin'
-      const { data: profile } = await supabase
+      const { data: profile } = await client
         .from('profiles')
         .select('is_superadmin,is_matrix_admin')
         .eq('id', authUser.id)
@@ -45,11 +46,11 @@ export default function AuthControls() {
       })
     }
 
-    supabase.auth.getUser().then(({ data }) => {
+    client.auth.getUser().then(({ data }) => {
       void resolveUserInfo(data.user)
     })
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = client.auth.onAuthStateChange((_event, session) => {
       void resolveUserInfo(session?.user ?? null)
     })
 
