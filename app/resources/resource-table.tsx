@@ -6,6 +6,8 @@ import { createSupabaseBrowserClient } from '../lib/supabase/client'
 import type { AdminResource } from '../lib/admin-resources'
 
 type GenericRow = Record<string, unknown>
+type FieldInputType = 'text' | 'number' | 'boolean' | 'null' | 'json'
+type FieldEntry = { id: string; key: string; type: FieldInputType; value: string }
 
 type ResourceTableProps = {
   resource: AdminResource
@@ -19,7 +21,10 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
   const [saving, setSaving] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [editorMode, setEditorMode] = useState<'guided' | 'json'>('guided')
   const [editorText, setEditorText] = useState('{\n  \n}')
+  const [fieldEntries, setFieldEntries] = useState<FieldEntry[]>([])
+  const [fieldDraft, setFieldDraft] = useState('')
   const [editKey, setEditKey] = useState<string | number | null>(null)
   const [uploadFile, setUploadFile] = useState<File | null>(null)
   const [uploadDescription, setUploadDescription] = useState('')
@@ -38,6 +43,8 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     if (!q) return rows
     return rows.filter((row) => JSON.stringify(row).toLowerCase().includes(q))
   }, [query, rows])
+  const shownCount = filteredRows.length
+  const totalCount = rows.length
 
   const columns = useMemo(() => {
     const keys = new Set<string>()
@@ -58,6 +65,19 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     })
     return ordered.slice(0, 8)
   }, [rows])
+
+  const editableColumns = useMemo(() => {
+    const reserved = new Set([
+      'id',
+      'created_datetime_utc',
+      'modified_datetime_utc',
+      'created_at',
+      'updated_at',
+      'created_by_user_id',
+      'modified_by_user_id',
+    ])
+    return columns.filter((column) => !reserved.has(column))
+  }, [columns])
 
   const primaryKey = useMemo(() => inferPrimaryKey(rows), [rows])
   const canCreate = resource.mode === 'crud'
@@ -156,6 +176,19 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     }
   }
 
+  function parseGuidedPayload() {
+    const payload: GenericRow = {}
+    for (const entry of fieldEntries) {
+      const key = entry.key.trim()
+      if (!key) continue
+      payload[key] = castEntryValue(entry)
+    }
+    if (Object.keys(payload).length === 0) {
+      throw new Error('Add at least one field before saving.')
+    }
+    return payload
+  }
+
   async function handleCreateOrUpdate(event: FormEvent) {
     event.preventDefault()
     if (!supabase || !activeTable) return
@@ -167,7 +200,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       if (!actorId) {
         throw new Error('Unable to resolve signed-in profile id for write operation.')
       }
-      const payload = parseEditorPayload()
+      const payload = editorMode === 'guided' ? parseGuidedPayload() : parseEditorPayload()
 
       if (canUpdate && editKey !== null && primaryKey) {
         const { error: updateError } = await supabase
@@ -190,6 +223,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       }
 
       setEditorText('{\n  \n}')
+      setFieldEntries([])
       setEditKey(null)
       await loadRows()
     } catch (err) {
@@ -215,6 +249,8 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
 
     const payload = { ...row }
     delete payload[primaryKey]
+    setFieldEntries(objectToEntries(payload))
+    setEditorMode('guided')
     setEditKey(keyValue)
     setEditorText(JSON.stringify(payload, null, 2))
   }
@@ -366,9 +402,22 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
           <div className="resource-meta">
             <span className="status">{resource.mode.toUpperCase()}</span>
             <span className="status">{activeTable ? `table: ${activeTable}` : 'table unresolved'}</span>
+            <span className="status">
+              showing {shownCount.toLocaleString()} / {totalCount.toLocaleString()}
+            </span>
           </div>
         </div>
       </section>
+
+      {(canCreate || canUpdate || canDelete) && (
+        <section className="panel helper-panel">
+          <h2>Operator guide</h2>
+          <p className="sub">
+            Use search to isolate rows, then edit/delete from row actions. Guided mode is recommended for normal use.
+            JSON mode is available for advanced edits.
+          </p>
+        </section>
+      )}
 
       {canUpload && (
         <section className="panel">
@@ -411,14 +460,146 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
                 ? 'Create row'
                 : 'Update row'}
           </h2>
-          <p className="sub">Use JSON payloads for flexible schema-safe editing across all required tables.</p>
+          <p className="sub">Guided form mode is default. Switch to JSON only when you need advanced control.</p>
+          <div className="row-actions">
+            <button
+              type="button"
+              className={`btn ghost ${editorMode === 'guided' ? 'active-mode' : ''}`}
+              onClick={() => setEditorMode('guided')}
+            >
+              Guided form
+            </button>
+            <button
+              type="button"
+              className={`btn ghost ${editorMode === 'json' ? 'active-mode' : ''}`}
+              onClick={() => setEditorMode('json')}
+            >
+              JSON mode
+            </button>
+          </div>
           <form className="form-grid" onSubmit={handleCreateOrUpdate}>
-            <textarea
-              className="input"
-              rows={10}
-              value={editorText}
-              onChange={(event) => setEditorText(event.target.value)}
-            />
+            {editorMode === 'guided' ? (
+              <>
+                <div className="row-actions">
+                  <select
+                    className="input"
+                    value={fieldDraft}
+                    onChange={(event) => setFieldDraft(event.target.value)}
+                  >
+                    <option value="">Choose field to add (optional)</option>
+                    {editableColumns.map((column) => (
+                      <option key={column} value={column}>
+                        {columnLabel(column)}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    className="btn ghost"
+                    onClick={() => {
+                      const nextKey = fieldDraft.trim() || ''
+                      setFieldEntries((prev) => [
+                        ...prev,
+                        {
+                          id: createEntryId(),
+                          key: nextKey,
+                          type: 'text',
+                          value: '',
+                        },
+                      ])
+                      setFieldDraft('')
+                    }}
+                  >
+                    Add field
+                  </button>
+                </div>
+
+                <div className="field-grid">
+                  {fieldEntries.map((entry) => (
+                    <div className="field-row" key={entry.id}>
+                      <input
+                        className="input"
+                        placeholder="field_name"
+                        value={entry.key}
+                        onChange={(event) =>
+                          setFieldEntries((prev) =>
+                            prev.map((item) =>
+                              item.id === entry.id ? { ...item, key: event.target.value } : item
+                            )
+                          )
+                        }
+                      />
+                      <select
+                        className="input"
+                        value={entry.type}
+                        onChange={(event) =>
+                          setFieldEntries((prev) =>
+                            prev.map((item) =>
+                              item.id === entry.id
+                                ? { ...item, type: event.target.value as FieldInputType, value: '' }
+                                : item
+                            )
+                          )
+                        }
+                      >
+                        <option value="text">Text</option>
+                        <option value="number">Number</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="null">Null</option>
+                        <option value="json">JSON</option>
+                      </select>
+                      {entry.type === 'boolean' ? (
+                        <select
+                          className="input"
+                          value={entry.value || 'true'}
+                          onChange={(event) =>
+                            setFieldEntries((prev) =>
+                              prev.map((item) =>
+                                item.id === entry.id ? { ...item, value: event.target.value } : item
+                              )
+                            )
+                          }
+                        >
+                          <option value="true">True</option>
+                          <option value="false">False</option>
+                        </select>
+                      ) : entry.type === 'null' ? (
+                        <input className="input" value="null" disabled />
+                      ) : (
+                        <input
+                          className="input"
+                          placeholder={entry.type === 'json' ? '{"key":"value"}' : 'value'}
+                          value={entry.value}
+                          onChange={(event) =>
+                            setFieldEntries((prev) =>
+                              prev.map((item) =>
+                                item.id === entry.id ? { ...item, value: event.target.value } : item
+                              )
+                            )
+                          }
+                        />
+                      )}
+                      <button
+                        type="button"
+                        className="btn danger"
+                        onClick={() =>
+                          setFieldEntries((prev) => prev.filter((item) => item.id !== entry.id))
+                        }
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <textarea
+                className="input"
+                rows={10}
+                value={editorText}
+                onChange={(event) => setEditorText(event.target.value)}
+              />
+            )}
             <div className="row-actions">
               <button className="btn" type="submit" disabled={saving || (!canCreate && editKey === null)}>
                 {saving
@@ -436,6 +617,7 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
                   onClick={() => {
                     setEditKey(null)
                     setEditorText('{\n  \n}')
+                    setFieldEntries([])
                   }}
                 >
                   Cancel edit
@@ -587,6 +769,12 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
               })}
             </tbody>
           </table>
+          {shownCount === 0 && (
+            <div className="empty-state">
+              <h3>No rows match this filter</h3>
+              <p>Try a broader search or clear filters to continue.</p>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -651,6 +839,59 @@ async function getActorProfileId(
   } = await supabase.auth.getUser()
   if (error || !user?.id) return null
   return user.id
+}
+
+function castEntryValue(entry: FieldEntry): unknown {
+  if (entry.type === 'null') return null
+  if (entry.type === 'boolean') return entry.value === 'true'
+  if (entry.type === 'number') {
+    const num = Number(entry.value)
+    if (Number.isNaN(num)) throw new Error(`Field "${entry.key}" expects a valid number.`)
+    return num
+  }
+  if (entry.type === 'json') {
+    try {
+      return JSON.parse(entry.value || '{}') as unknown
+    } catch {
+      throw new Error(`Field "${entry.key}" has invalid JSON.`)
+    }
+  }
+  return entry.value
+}
+
+function objectToEntries(payload: GenericRow): FieldEntry[] {
+  return Object.entries(payload)
+    .filter(([key]) =>
+      ![
+        'created_datetime_utc',
+        'modified_datetime_utc',
+        'created_at',
+        'updated_at',
+        'created_by_user_id',
+        'modified_by_user_id',
+      ].includes(key)
+    )
+    .map(([key, value]) => inferFieldEntry(key, value))
+}
+
+function inferFieldEntry(key: string, value: unknown): FieldEntry {
+  if (value === null || value === undefined) {
+    return { id: createEntryId(), key, type: 'null', value: '' }
+  }
+  if (typeof value === 'boolean') {
+    return { id: createEntryId(), key, type: 'boolean', value: value ? 'true' : 'false' }
+  }
+  if (typeof value === 'number') {
+    return { id: createEntryId(), key, type: 'number', value: String(value) }
+  }
+  if (typeof value === 'object') {
+    return { id: createEntryId(), key, type: 'json', value: JSON.stringify(value) }
+  }
+  return { id: createEntryId(), key, type: 'text', value: String(value) }
+}
+
+function createEntryId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
 }
 
 function columnLabel(column: string) {
