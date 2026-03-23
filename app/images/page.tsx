@@ -47,14 +47,34 @@ export default function ImagesPage() {
     setSaving(true)
     setError(null)
 
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+    if (userError || !user?.id) {
+      setError('Unable to resolve signed-in profile id for write operation.')
+      setSaving(false)
+      return
+    }
+
     const payload = {
       url: url.trim() || null,
       image_description: description.trim() || null,
     }
 
     const request = editId
-      ? supabase.from('images').update(payload).eq('id', editId)
-      : supabase.from('images').insert(payload)
+      ? supabase
+          .from('images')
+          .update({
+            ...payload,
+            modified_by_user_id: user.id,
+          })
+          .eq('id', editId)
+      : supabase.from('images').insert({
+          ...payload,
+          created_by_user_id: user.id,
+          modified_by_user_id: user.id,
+        })
 
     const { error: writeError } = await request
     if (writeError) {

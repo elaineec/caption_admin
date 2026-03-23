@@ -163,16 +163,27 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     setError(null)
 
     try {
+      const actorId = await getActorProfileId(supabase)
+      if (!actorId) {
+        throw new Error('Unable to resolve signed-in profile id for write operation.')
+      }
       const payload = parseEditorPayload()
 
       if (canUpdate && editKey !== null && primaryKey) {
         const { error: updateError } = await supabase
           .from(activeTable)
-          .update(payload)
+          .update({
+            ...payload,
+            modified_by_user_id: actorId,
+          })
           .eq(primaryKey, editKey)
         if (updateError) throw updateError
       } else if (canCreate) {
-        const { error: insertError } = await supabase.from(activeTable).insert(payload)
+        const { error: insertError } = await supabase.from(activeTable).insert({
+          ...payload,
+          created_by_user_id: actorId,
+          modified_by_user_id: actorId,
+        })
         if (insertError) throw insertError
       } else {
         throw new Error('This resource is not create-enabled.')
@@ -260,10 +271,18 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
     }
 
     setError(null)
+    const actorId = await getActorProfileId(supabase)
+    if (!actorId) {
+      setError('Unable to resolve signed-in profile id for reorder operation.')
+      return
+    }
 
     const { error: firstError } = await supabase
       .from(activeTable)
-      .update({ order_by: targetOrder })
+      .update({
+        order_by: targetOrder,
+        modified_by_user_id: actorId,
+      })
       .eq(primaryKey, rowId)
     if (firstError) {
       setError(firstError.message)
@@ -272,7 +291,10 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
 
     const { error: secondError } = await supabase
       .from(activeTable)
-      .update({ order_by: currentOrder })
+      .update({
+        order_by: currentOrder,
+        modified_by_user_id: actorId,
+      })
       .eq(primaryKey, targetId)
     if (secondError) {
       setError(secondError.message)
@@ -309,7 +331,18 @@ export default function ResourceTable({ resource }: ResourceTableProps) {
       image_description: uploadDescription.trim() || null,
     }
 
-    const { error: insertError } = await supabase.from(activeTable).insert(payload)
+    const actorId = await getActorProfileId(supabase)
+    if (!actorId) {
+      setError('Unable to resolve signed-in profile id for upload insert.')
+      setUploading(false)
+      return
+    }
+
+    const { error: insertError } = await supabase.from(activeTable).insert({
+      ...payload,
+      created_by_user_id: actorId,
+      modified_by_user_id: actorId,
+    })
     if (insertError) {
       setError(insertError.message)
       setUploading(false)
@@ -607,6 +640,17 @@ function stringifyValue(value: unknown) {
   if (value === null || value === undefined) return '—'
   if (typeof value === 'string' || typeof value === 'number') return String(value)
   return JSON.stringify(value)
+}
+
+async function getActorProfileId(
+  supabase: NonNullable<ReturnType<typeof createSupabaseBrowserClient>>
+) {
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+  if (error || !user?.id) return null
+  return user.id
 }
 
 function columnLabel(column: string) {
