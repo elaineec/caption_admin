@@ -10,6 +10,13 @@ type RatingAggregate = {
   average: number | null
   latestAt: string | null
 }
+type FlavorRatingSummary = {
+  flavorLabel: string
+  captionCount: number
+  ratedCaptionCount: number
+  ratingCount: number
+  averageScore: number | null
+}
 
 const CAPTION_RATING_TABLE_CANDIDATES = [
   'caption_ratings',
@@ -87,6 +94,7 @@ export default function CaptionsPage() {
   const totalRatings = Object.values(ratingStatsByCaptionId).reduce((sum, item) => sum + item.count, 0)
   const averageRatingsPerRatedCaption = ratedCaptions ? totalRatings / ratedCaptions : 0
   const averageScoreAcrossRatings = averageOfAverages(Object.values(ratingStatsByCaptionId))
+  const flavorSummary = useMemo(() => buildFlavorSummary(rows, ratingStatsByCaptionId), [rows, ratingStatsByCaptionId])
 
   return (
     <AdminFrame
@@ -130,6 +138,39 @@ export default function CaptionsPage() {
           <strong>{formatRatingAverage(averageScoreAcrossRatings)}</strong>
           <small>Across numeric ratings</small>
         </article>
+      </section>
+
+      <section className="panel resource-search-panel">
+        <div className="resource-section-head">
+          <div>
+            <h2>Rating summary by humor flavor</h2>
+            <p className="sub">Shows where users are actually rating captions and which flavors are performing best.</p>
+          </div>
+        </div>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Flavor</th>
+                <th>Captions</th>
+                <th>Rated Captions</th>
+                <th>Total Ratings</th>
+                <th>Avg Score</th>
+              </tr>
+            </thead>
+            <tbody>
+              {flavorSummary.map((item) => (
+                <tr key={item.flavorLabel}>
+                  <td>{item.flavorLabel}</td>
+                  <td>{item.captionCount.toLocaleString()}</td>
+                  <td>{item.ratedCaptionCount.toLocaleString()}</td>
+                  <td>{item.ratingCount.toLocaleString()}</td>
+                  <td>{formatRatingAverage(item.averageScore)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </section>
 
       <input
@@ -276,6 +317,48 @@ function averageOfAverages(stats: RatingAggregate[]) {
   const numeric = stats.filter((item) => item.average !== null)
   if (!numeric.length) return null
   return numeric.reduce((sum, item) => sum + (item.average ?? 0), 0) / numeric.length
+}
+
+function buildFlavorSummary(rows: CaptionRow[], ratingStatsByCaptionId: Record<string, RatingAggregate>) {
+  const byFlavor = new Map<string, { captionCount: number; ratedCaptionCount: number; ratingCount: number; scoreTotal: number; scoreCount: number }>()
+
+  for (const row of rows) {
+    const flavorLabel =
+      typeof row.humor_flavor_id === 'number' || typeof row.humor_flavor_id === 'string'
+        ? `Flavor ${String(row.humor_flavor_id)}`
+        : 'Unassigned'
+    const current = byFlavor.get(flavorLabel) ?? {
+      captionCount: 0,
+      ratedCaptionCount: 0,
+      ratingCount: 0,
+      scoreTotal: 0,
+      scoreCount: 0,
+    }
+    current.captionCount += 1
+
+    const captionId = getRowId(row)
+    const ratingSummary = captionId ? ratingStatsByCaptionId[captionId] : undefined
+    if (ratingSummary) {
+      current.ratedCaptionCount += 1
+      current.ratingCount += ratingSummary.count
+      if (ratingSummary.average !== null) {
+        current.scoreTotal += ratingSummary.average
+        current.scoreCount += 1
+      }
+    }
+
+    byFlavor.set(flavorLabel, current)
+  }
+
+  return [...byFlavor.entries()]
+    .map(([flavorLabel, value]) => ({
+      flavorLabel,
+      captionCount: value.captionCount,
+      ratedCaptionCount: value.ratedCaptionCount,
+      ratingCount: value.ratingCount,
+      averageScore: value.scoreCount ? value.scoreTotal / value.scoreCount : null,
+    }))
+    .sort((a, b) => b.ratingCount - a.ratingCount || b.captionCount - a.captionCount)
 }
 
 function formatRatingAverage(value: number | null) {
