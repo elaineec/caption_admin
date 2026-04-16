@@ -256,6 +256,25 @@ export default function DashboardPage() {
               )}
             </article>
           </section>
+
+          <section className="panel-grid">
+            <article className="panel">
+              <h2>Submissions</h2>
+              <ul className="data-list">
+                <li><span>Submit the latest commit-specific Vercel URLs for the caption creation app, admin app, and prompt chain tool.</span></li>
+                <li><span>Use the most recent deployed commit for each app rather than the generic production domain.</span></li>
+                <li><span>Keep GitHub repo links ready for the final submission checklist.</span></li>
+              </ul>
+            </article>
+
+            <article className="panel">
+              <h2>Weekly Reminder</h2>
+              <ul className="data-list">
+                <li><span>Complete this week&apos;s Humor Study at <a href="https://humorstudy.org" target="_blank" rel="noreferrer">humorstudy.org</a>.</span></li>
+                <li><span>Confirm the admin statistics and flavor tools are live before you submit URLs.</span></li>
+              </ul>
+            </article>
+          </section>
         </>
       )}
     </AdminFrame>
